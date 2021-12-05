@@ -1,4 +1,4 @@
-name: deeplab-pytorch
+name: jsp_deeplab
 dependencies:
   - click
   - conda-forge::pydensecrf

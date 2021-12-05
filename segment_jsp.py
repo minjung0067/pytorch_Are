@@ -22,6 +22,121 @@ from PIL import Image
 from libs.models import *
 from libs.utils import DenseCRF
 
+##################
+
+# 2021 11-27
+
+from glob import glob
+from PIL import Image
+import os
+
+# 함수 추가 : multi
+#    Input : Image folder
+#    Output : Segmentatio Mask folder
+
+
+@click.group()
+@click.pass_context
+def main(ctx):
+    """
+    Demo with a trained model
+    """
+
+    print("Mode:", ctx.invoked_subcommand)
+    
+    
+@main.command()
+@click.option(
+    "-c",
+    "--config-path",
+    type=click.File(),
+    required=True,
+    help="Dataset configuration file in YAML",
+    )
+@click.option(
+    "-m",
+    "--model-path",
+    type=click.Path(exists=True),
+    required=True,
+    help="PyTorch model to be loaded",
+)
+@click.option(
+    "-i",
+    "--image-folder",
+    type=click.Path(exists=True),
+    required=True,
+    help="Image to be processed",
+)
+@click.option(
+    "--cuda/--cpu", default=True, help="Enable CUDA if available [default: --cuda]"
+)
+@click.option("--crf", is_flag=True, show_default=True, help="CRF post-processing")
+@click.option(
+    "--mask-folder", default='labels', help="folder to store segmentation masks [default: './labels']"
+)
+def multi(config_path, model_path, image_folder, mask_folder, cuda, crf):
+    """
+    Inference from a single image
+    """
+
+    # Setup
+    CONFIG = OmegaConf.load(config_path)
+    device = get_device(cuda)
+    torch.set_grad_enabled(False)
+
+    classes = get_classtable(CONFIG)
+    postprocessor = setup_postprocessor(CONFIG) if crf else None
+
+    model = eval(CONFIG.MODEL.NAME)(n_classes=CONFIG.DATASET.N_CLASSES)
+    state_dict = torch.load(model_path, map_location=lambda storage, loc: storage)
+    model.load_state_dict(state_dict)
+    model.eval()
+    model.to(device)
+    print("Model:", CONFIG.MODEL.NAME)
+    
+    
+    # 
+    image_paths = glob(os.path.join(image_folder, '*')) # 이미지 파일의 경로들.
+    image_names = [im_path.split('/')[-1].split('.')[0] for im_path in image_paths] # 이미지 파일의 이름들.
+
+    # 저장 폴더
+    mask_folder='./labels'
+    if not os.path.exists(mask_folder):
+        os.mkdir(mask_folder)
+    
+    num_image=len(os.listdir(image_folder))
+    num_label=len(os.listdir(mask_folder))
+    
+    if num_label==num_image:
+        print('이미지와 라벨의 개수가 이미 같습니다')
+        return
+    
+    # Inference
+    for idx, image_path in enumerate(image_paths):
+        if idx < num_label :
+            print('pass. ... ', image_path)
+            continue
+        
+        print('process ... ', image_path)
+        image = cv2.imread(image_path, cv2.IMREAD_COLOR)
+        image, raw_image = preprocessing(image, device, CONFIG)
+        labelmap = inference(model, image, raw_image, postprocessor)
+        
+        labelmap=labelmap.astype(np.uint8)
+        
+        # save
+        save_path=os.path.join(mask_folder, image_names[idx]+'.png')
+        
+        Image.fromarray(labelmap).save(save_path) #픽셀 값 바뀌는 현상 방지를 위해 PIL.Image 이용.
+        
+        
+        
+        
+
+
+
+#############################################################
+##### 기존 함수들(수정 x)
 
 def get_device(cuda):
     cuda = cuda and torch.cuda.is_available()
@@ -97,14 +212,7 @@ def inference(model, image, raw_image=None, postprocessor=None):
     return labelmap
 
 
-@click.group()
-@click.pass_context
-def main(ctx):
-    """
-    Demo with a trained model
-    """
 
-    print("Mode:", ctx.invoked_subcommand)
 
 
 @main.command()
@@ -168,18 +276,21 @@ def single(config_path, model_path, image_path, cuda, crf):
     ax.set_title("Input image")
     ax.imshow(raw_image[:, :, ::-1])
     ax.axis("off")
+#     np.save( 'labelmap.npy', labelmap)
+#     np.save( 'labels.npy', labels)
     for i, label in enumerate(labels):
         mask = labelmap == label
         ax = plt.subplot(rows, cols, i + 2)
         ax.set_title(classes[label])
         ax.imshow(raw_image[..., ::-1])
+#         np.save( 'raw_image.npy', raw_image[..., ::-1])
         ax.imshow(mask.astype(np.float32), alpha=0.5)
+#         np.save('mask.npy', mask.astype(np.float32))
+#         np.save('mask_255.npy', (mask*255).astype(np.uint8))
         ax.axis("off")
     
-    # 2021-11-27 추가.
-    if not os.path.exists('results'):
-        os.mkdir('results')
-    plt.savefig('results/fig1.png', dpi=300)
+    plt.savefig('fig1.png', dpi=300)
+#     Image.fromarray((mask*255).astype(np.uint8)).save('mask.png')
 
 
 @main.command()
