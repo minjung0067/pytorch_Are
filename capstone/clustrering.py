@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image
 
 
-targerdir = r"/Users/endless/deeplab-pytorch/labels"  # 해당 폴더 설정
+targerdir = r"/Users/mant/Desktop/project/school/capstone/pytorch_Are/labels"  # 해당 폴더 설정
 
 
 # os.listdir(): 인자 내부에 있는 파일만 출력, 폴더라면 출력 안함

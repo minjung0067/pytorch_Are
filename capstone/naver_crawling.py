@@ -12,7 +12,7 @@ driver = wb.Chrome()
 driver.get('https://www.naver.com')
 search = driver.find_element(By.CSS_SELECTOR, '#query')
 search.click()
-search.send_keys('호미곶 인생샷')
+search.send_keys('보문 콜로세움 인생샷')
 search.send_keys(Keys.ENTER)
 
 button = driver.find_element(By.CSS_SELECTOR, '#lnb > div.lnb_group > div > ul > li:nth-child(3) > a')
@@ -21,7 +21,7 @@ button.click()
 body = driver.find_element(By.TAG_NAME, 'body')
 for i in tq(range(20)):
     body.send_keys(Keys.END)
-    time.sleep(0.5)
+    # time.sleep(1.5)
 
 soup = bs(driver.page_source, 'html.parser') # html.parser
 imgs = soup.select('div.thumb img')
@@ -29,11 +29,12 @@ imgs = soup.select('div.thumb img')
 img_list = []
 for img in imgs:
     img_list.append(img['src'])
+    # time.sleep(1)
 
-if not os.path.isdir('C:/Users/jeongdaeyun/PycharmProjects/pythonProject/main/img'):
-    os.mkdir('C:/Users/jeongdaeyun/PycharmProjects/pythonProject/main/img')
+if not os.path.isdir('/Users/mant/Desktop/project/school/capstone/pytorch_Are/capstone/naver_crawling_img'):
+    os.mkdir('/Users/mant/Desktop/project/school/capstone/pytorch_Are/capstone/naver_crawling_img')
 else:
     print('이미 존재하는 폴더입니다.')
 
 for idx, img in enumerate(img_list):
-    urlretrieve(img, 'C:/Users/jeongdaeyun/PycharmProjects/pythonProject/main/img/officelook{0}.jpg'.format(idx))
+    urlretrieve(img, '/Users/mant/Desktop/project/school/capstone/pytorch_Are/capstone/naver_crawling_img/crawling{0}.jpg'.format(idx))
