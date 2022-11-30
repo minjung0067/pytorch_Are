@@ -1,3 +1,5 @@
+#segment_jsp.py
+
 #!/usr/bin/env python
 # coding: utf-8
 #
@@ -24,7 +26,7 @@ from libs.utils import DenseCRF
 
 ##################
 
-# 2021 11-27
+# 2022 11-17
 
 from glob import glob
 from PIL import Image
@@ -43,8 +45,8 @@ def main(ctx):
     """
 
     print("Mode:", ctx.invoked_subcommand)
-    
-    
+
+
 @main.command()
 @click.option(
     "-c",
@@ -52,7 +54,7 @@ def main(ctx):
     type=click.File(),
     required=True,
     help="Dataset configuration file in YAML",
-    )
+)
 @click.option(
     "-m",
     "--model-path",
@@ -78,6 +80,11 @@ def multi(config_path, model_path, image_folder, mask_folder, cuda, crf):
     """
     Inference from a single image
     """
+    def colorize(labelmap):
+        # Assign a unique color to each label
+        labelmap = labelmap.astype(np.float32) / CONFIG.DATASET.N_CLASSES
+        colormap = cm.jet_r(labelmap)[..., :-1] * 255.0
+        return np.uint8(colormap)
 
     # Setup
     CONFIG = OmegaConf.load(config_path)
@@ -88,55 +95,53 @@ def multi(config_path, model_path, image_folder, mask_folder, cuda, crf):
     postprocessor = setup_postprocessor(CONFIG) if crf else None
 
     model = eval(CONFIG.MODEL.NAME)(n_classes=CONFIG.DATASET.N_CLASSES)
-    state_dict = torch.load(model_path, map_location=lambda storage, loc: storage)
+    state_dict = torch.load(
+        model_path, map_location=lambda storage, loc: storage)
     model.load_state_dict(state_dict)
     model.eval()
     model.to(device)
     print("Model:", CONFIG.MODEL.NAME)
-    
-    
-    # 
-    image_paths = glob(os.path.join(image_folder, '*')) # 이미지 파일의 경로들.
-    image_names = [im_path.split('/')[-1].split('.')[0] for im_path in image_paths] # 이미지 파일의 이름들.
+
+    #
+    image_paths = glob(os.path.join(image_folder, '*'))  # 이미지 파일의 경로들.
+    # 이미지 파일의 이름들.
+    image_names = [im_path.split('/')[-1].split('.')[0]
+                   for im_path in image_paths]
 
     # 저장 폴더
-    mask_folder='./labels'
+    mask_folder = './labels'
     if not os.path.exists(mask_folder):
         os.mkdir(mask_folder)
-    
-    num_image=len(os.listdir(image_folder))
-    num_label=len(os.listdir(mask_folder))
-    
-    if num_label==num_image:
+
+    num_image = len(os.listdir(image_folder))
+    num_label = len(os.listdir(mask_folder))
+
+    if num_label == num_image:
         print('이미지와 라벨의 개수가 이미 같습니다')
         return
-    
+
     # Inference
     for idx, image_path in enumerate(image_paths):
-        if idx < num_label :
+        if idx < num_label:
             print('pass. ... ', image_path)
             continue
-        
+
         print('process ... ', image_path)
         image = cv2.imread(image_path, cv2.IMREAD_COLOR)
         image, raw_image = preprocessing(image, device, CONFIG)
         labelmap = inference(model, image, raw_image, postprocessor)
-        
-        labelmap=labelmap.astype(np.uint8)
-        
-        # save
-        save_path=os.path.join(mask_folder, image_names[idx]+'.png')
-        
-        Image.fromarray(labelmap).save(save_path) #픽셀 값 바뀌는 현상 방지를 위해 PIL.Image 이용.
-        
-        
-        
-        
 
+        labelmap = labelmap.astype(np.uint8)
+
+        # save
+        save_path = os.path.join(mask_folder, image_names[idx]+'.png')
+
+        # 픽셀 값 바뀌는 현상 방지를 위해 PIL.Image 이용.
+        Image.fromarray(labelmap).save(save_path)
 
 
 #############################################################
-##### 기존 함수들(수정 x)
+# 기존 함수들(수정 x)
 
 def get_device(cuda):
     cuda = cuda and torch.cuda.is_available()
@@ -199,7 +204,8 @@ def inference(model, image, raw_image=None, postprocessor=None):
 
     # Image -> Probability map
     logits = model(image)
-    logits = F.interpolate(logits, size=(H, W), mode="bilinear", align_corners=False)
+    logits = F.interpolate(logits, size=(
+        H, W), mode="bilinear", align_corners=False)
     probs = F.softmax(logits, dim=1)[0]
     probs = probs.cpu().numpy()
 
@@ -212,9 +218,6 @@ def inference(model, image, raw_image=None, postprocessor=None):
     return labelmap
 
 
-
-
-
 @main.command()
 @click.option(
     "-c",
@@ -222,7 +225,7 @@ def inference(model, image, raw_image=None, postprocessor=None):
     type=click.File(),
     required=True,
     help="Dataset configuration file in YAML",
-    )
+)
 @click.option(
     "-m",
     "--model-path",
@@ -255,7 +258,8 @@ def single(config_path, model_path, image_path, cuda, crf):
     postprocessor = setup_postprocessor(CONFIG) if crf else None
 
     model = eval(CONFIG.MODEL.NAME)(n_classes=CONFIG.DATASET.N_CLASSES)
-    state_dict = torch.load(model_path, map_location=lambda storage, loc: storage)
+    state_dict = torch.load(
+        model_path, map_location=lambda storage, loc: storage)
     model.load_state_dict(state_dict)
     model.eval()
     model.to(device)
@@ -288,7 +292,7 @@ def single(config_path, model_path, image_path, cuda, crf):
 #         np.save('mask.npy', mask.astype(np.float32))
 #         np.save('mask_255.npy', (mask*255).astype(np.uint8))
         ax.axis("off")
-    
+
     plt.savefig('fig1.png', dpi=300)
 #     Image.fromarray((mask*255).astype(np.uint8)).save('mask.png')
 
@@ -328,7 +332,8 @@ def live(config_path, model_path, cuda, crf, camera_id):
     postprocessor = setup_postprocessor(CONFIG) if crf else None
 
     model = eval(CONFIG.MODEL.NAME)(n_classes=CONFIG.DATASET.N_CLASSES)
-    state_dict = torch.load(model_path, map_location=lambda storage, loc: storage)
+    state_dict = torch.load(
+        model_path, map_location=lambda storage, loc: storage)
     model.load_state_dict(state_dict)
     model.eval()
     model.to(device)
