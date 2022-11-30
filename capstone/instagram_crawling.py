@@ -20,6 +20,23 @@ soup = BeautifulSoup(html)
 
 imglist = []
 
+driver.get('웹페이지 주소')
+def scroll_to_bottom():
+  last_height = driver.execute_script('return document.body.scrollHeight')
+
+  while True:
+    driver.execute_script('window.scrollTo(0, document.body.scrollHeight)')
+
+    time.sleep(0.6)
+
+    new_height = driver.execute_script('return document.body.scrollHeight')
+
+    if new_height >200000:
+      break
+    print(f'last_height = {last_height}')
+    print(f'new_height = {new_height}')
+
+    last_height = new_height
 
 for i in range(0, 2):
 

@@ -19,8 +19,16 @@ button = driver.find_element(By.CSS_SELECTOR, '#lnb > div.lnb_group > div > ul >
 button.click()
 
 body = driver.find_element(By.TAG_NAME, 'body')
-for i in tq(range(20)):
-    body.send_keys(Keys.END)
+try:
+    for i in range(5):
+        driver.execute_script("winow.scrollBy(0,10000)")
+except Exception as e:
+    print(e)
+try:
+    for i in tq(range(20)):
+        body.send_keys(Keys.PAGE_DOWN)
+except Exception as e:
+    print(e)
     # time.sleep(1.5)
 
 soup = bs(driver.page_source, 'html.parser') # html.parser
