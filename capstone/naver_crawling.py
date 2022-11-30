@@ -7,6 +7,7 @@ import pandas
 import os #파일이나 폴더를 생성,삭제 해주는 라이브러리 filesystem lib
 from urllib.request import urlretrieve
 from tqdm import tqdm as tq
+import path_setting as PATH
 
 driver = wb.Chrome()
 driver.get('https://www.naver.com')
@@ -39,10 +40,10 @@ for img in imgs:
     img_list.append(img['src'])
     # time.sleep(1)
 
-if not os.path.isdir('/Users/mant/Desktop/project/school/capstone/pytorch_Are/capstone/naver_crawling_img'):
-    os.mkdir('/Users/mant/Desktop/project/school/capstone/pytorch_Are/capstone/naver_crawling_img')
+if not os.path.isdir(PATH.crawling_save_dir):
+    os.mkdir(PATH.crawling_save_dir)
 else:
     print('이미 존재하는 폴더입니다.')
 
 for idx, img in enumerate(img_list):
-    urlretrieve(img, '/Users/mant/Desktop/project/school/capstone/pytorch_Are/capstone/naver_crawling_img/crawling{0}.jpg'.format(idx))
+    urlretrieve(img, PATH.crawling_save_dir + '/crawling{0}.jpg'.format(idx))

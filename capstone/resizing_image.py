@@ -3,8 +3,9 @@ import numpy as np
 from PIL import Image
 import numpy as np
 import cv2
+import path_setting as PATH
 # 이미지 리 사이징 하기
-targerdir = r"C:/Users/jeongdaeyun/PycharmProjects/pythonProject/main/img"  # 해당 폴더 설정 - 크롤링한 이미지
+targerdir = PATH.target_dir  # 해당 폴더 설정 - 크롤링한 이미지
 
 files = os.listdir(targerdir)
 
@@ -22,17 +23,17 @@ for (path, dirs, files) in os.walk(targerdir):
             if h>w and h/w < 16/9:  
                 image = image.convert('RGB') # 이미지를 색깔로 바꾸겠다
                 img = image.resize((300,400))  # 이미지 사이즈 변경
-                img.save("C:/Users/jeongdaeyun/PycharmProjects/pythonProject/main/sample_data1/" + file) # 이미지 저장 경로
+                img.save(PATH.save_dir1 + file) # 이미지 저장 경로
             elif h < w and w/h < 16/9:
                 image = image.convert('RGB')
                 img = image.resize((400, 300))
-                img.save("C:/Users/jeongdaeyun/PycharmProjects/pythonProject/main/sample_data2/" + file)
+                img.save(PATH.save_dir2 + file)
             elif h == w:
                 image = image.convert('RGB')
                 img = image.resize((300, 300))
-                img.save("C:/Users/jeongdaeyun/PycharmProjects/pythonProject/main/sample_data3/" + file)
+                img.save(PATH.save_dir3 + file)
             else:
-                image.save("C:/Users/jeongdaeyun/PycharmProjects/pythonProject/main/sample_data4/" + file)
+                image.save(PATH.save_dir4+ file)
             # image.save(file)
 
             print(image.size)

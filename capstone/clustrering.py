@@ -6,9 +6,10 @@ from sklearn.cluster import KMeans
 import os
 import numpy as np
 from PIL import Image
+import path_setting as PATH
 
 
-targerdir = r"/Users/mant/Desktop/project/school/capstone/pytorch_Are/labels"  # 해당 폴더 설정
+targerdir = PATH.clustering_dir  # 해당 폴더 설정
 
 
 # os.listdir(): 인자 내부에 있는 파일만 출력, 폴더라면 출력 안함
